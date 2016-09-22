@@ -65,6 +65,7 @@ def main():
 
             for s in statuses:
                 sintweet = s.text
+                sintweet = sintweet.replace('\n', ' ')
                 sintweet = sintweet.encode('ascii', 'ignore')
                 tweetFile.write(sintweet + '\n')
                 #print('wrote tweet')
