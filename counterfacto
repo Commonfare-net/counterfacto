@@ -1,0 +1,304 @@
+#!/usr/bin/env python2
+# Counterfacto is Copyright (C) 2016 by the Dyne.org Foundation
+# as part of the PIEnews project
+#
+# This file is part of Counterfacto
+# Written by Ivan J. <parazyd@dyne.org>
+#
+# This source code is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This source code is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  Please refer
+# to the GNU Public License for more details.
+#
+# You should have received a copy of the GNU Public License along with
+# this source code; if not, write to: Free Software Foundation, Inc.,
+# 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+# This project has received funding from the European Union's Horizon
+# 2020 Programme for research, technological development and
+# demonstration under grant agreement nr. 687922
+
+import nltk
+from nltk.tag.perceptron import PerceptronTagger
+import re
+import sys
+import twitter
+import twokenize
+
+
+global tweetfile
+global taggedFile
+taggedFile = 'tagged.txt'
+
+## get these by creating a twitter app
+twit_consumer_key = ''
+twit_consumer_secret = ''
+twit_access_key = ''
+twit_access_secret = ''
+
+def main():
+    ## credential check json
+    #print(api.VerifyCredentials())
+
+    try:
+        if sys.argv[1] == '-f':
+            tweetfile = sys.argv[2]
+            classify(tweetfile)
+
+        elif sys.argv[1] == '-a':
+            api = twitter.Api(consumer_key=twit_consumer_key,
+                  consumer_secret=twit_consumer_secret,
+                  access_token_key=twit_access_key,
+                  access_token_secret=twit_access_secret)
+
+            accountname = sys.argv[2]
+            statuses = api.GetUserTimeline(screen_name=accountname,
+                                           count=100)
+
+            tweetfile = 'fetchedtweets-' + sys.argv[2] + '.txt'
+            tweetFile = open(tweetfile, 'w')
+
+            for s in statuses:
+                sintweet = s.text
+                sintweet = sintweet.encode('ascii', 'ignore')
+                tweetFile.write(sintweet + '\n')
+                #print('wrote tweet')
+
+            tweetFile.close()
+            classify(tweetfile)
+
+        elif sys.argv[1] == '-s':
+            api = twitter.Api(consumer_key=twit_consumer_key,
+                  consumer_secret=twit_consumer_secret,
+                  access_token_key=twit_access_key,
+                  access_token_secret=twit_access_secret)
+
+            if len(sys.argv) >= 3:
+                searchterm = ' '.join(sys.argv[2:])
+            statuses = api.GetSearch(term=searchterm,
+                                     count=100,
+                                     result_type="recent")
+
+            #for s in statuses:
+            #    print(s.text)
+            #exit()
+
+            tweetfile = 'fetchedtweets-' + sys.argv[2] + '.txt'
+            tweetFile = open(tweetfile, 'w')
+
+            for s in statuses:
+                sintweet = s.text
+                sintweet = sintweet.replace('\n', ' ')
+                sintweet = sintweet.encode('ascii', 'ignore')
+                tweetFile.write(sintweet + '\n')
+                #print('wrote tweet')
+
+            tweetFile.close()
+            classify(tweetfile)
+
+    except:
+        print("Usage: ./counterfacto {-a|-f|-s} {twitter account | file with tweets | search terms}")
+        exit(1)
+
+## {{{ processing functions
+def tokenizelocal():
+    tweets = tweetFile.read().splitlines()
+    for t in tweets:
+        print(t + '\n')
+        print(str(twokenize.tokenize(t)) + '\n')
+
+def format_tweet(message):
+    m = str(message)
+    m = m.replace('\n', ' ')
+    m = m.encode('ascii', 'ignore')
+    return m
+
+def format_tagged(tagged_list):
+    out = ''
+    for t in tagged_list:
+        token, tag = postprocess_tag(t[0], t[1])
+        out = out + token + '/' + tag + '/'
+    out = out + '\n'
+    return out
+
+def postprocess_tag(token, tag):
+    outtag = tag
+    if (is_twitter_cf_modal(token)):
+        outtag = 'MD'
+    elif (tag_CCJ(token)):
+        outtag = 'CCJ'
+    return token, outtag
+
+def get_cf_form(tagged_message):
+
+    # Filter out questions
+    pq = re.compile('\.*/\?/.', re.IGNORECASE)
+    if pq.search(tagged_message) != None:
+        return 0
+
+    # CASE 1 WISH VERB FORM
+    p1 = re.compile('\.*(wish|wishing)/((VB.*/)|(JJ/))', re.IGNORECASE)
+    if p1.search(tagged_message) != None:
+        return 1
+
+
+    # CASE 2 CONJUNTION NORMAL
+    p2 = re.compile('\.*/CCJ/.*((/VBD/)|(/VBN/)).*/MD/', re.IGNORECASE)
+    if p2.search(tagged_message) != None:
+        return 2
+
+
+    # CASE 3 CONJUNCTIVE CONVERSE
+    p3 = re.compile('\.*/MD/.*/CCJ/.*((/VBN/)|(/VBD/))', re.IGNORECASE)
+    if p3.search(tagged_message) != None:
+        return 3
+
+
+    # CASE 5 Should have
+    p4 = re.compile('\.*/((should\'ve)/MD/)|(((should)|(shoulda)(shulda)|(shuda)|(shudda)|(shudve))/MD/((have)|(hve)|(ve))/)(\w)*((/VBN/)|(/VBD/))', re.IGNORECASE)
+    if p4.search(tagged_message) != None:
+        return 4
+
+    # CASE 6 VERB INVERSION
+    p5 = re.compile(("\.*(had/(\w)*/(\w)*((/NN/)|(/NNP/)|(/NNPS/)|(/NNS/)|(/PRP/)).*((/VBN/)|(/VBD/)).*/MD/)"
+                    "|(were/(\w)*/(\w)*((/NN/)|(/NNP/)|(/NNPS/)|(/NNS/)|(/PRP/)).*/MD/)"
+                    "|(/MD/.*/VB.*/had/(\w)*/(\w)*((/NN/)|(/NNP/)|(/NNPS/)|(/NNS/)|(/PRP/)).*((/VBN/)|(/VBD/)))"), re.IGNORECASE)
+    if p5.search(tagged_message) != None:
+        return 5
+
+
+    # CASE 6 MODAL NORMAL
+    p6 = re.compile('\.*/MD/.*((/VBN/)|(/VBD/)).*/MD/.*((/VBN/)|(/VBD/)|(/VB/)|(VBZ))', re.IGNORECASE)
+    if p6.search(tagged_message) != None:
+        return 6
+
+    # If no matches
+    return 0
+
+
+
+def is_twitter_cf_modal(word):
+    w = unicode(word, errors='ignore').encode('utf-8').lower()
+    if (w == 'should' or 
+        w == 'should\'ve' or
+        w == 'shouldve' or
+        w == 'shoulda' or 
+        w == 'shulda' or 
+        w == 'shuda' or 
+        w == 'shudda' or 
+        w == 'shudve' or 
+        w == 'would' or 
+        w == 'would\'ve' or
+        w == 'wouldve' or
+        w == 'woulda' or 
+        w == 'wuda' or 
+        w == 'wulda' or 
+        w == 'wudda' or 
+        w == 'wudve' or 
+        w == 'wlda' or 
+        w == 'could' or 
+        w == 'could\'ve' or
+        w == 'couldve' or
+        w == 'coulda' or 
+        w == 'cudda' or 
+        w == 'culda' or 
+        w == 'cudve' or 
+        w == 'must' or 
+        w == 'mustve' or 
+        w == 'might' or 
+        w == 'might\'ve' or
+        w == 'mightve' or 
+        w == 'ought' or 
+        w == 'may' or 
+        w == 'i\'d' or 
+        w == 'id' or 
+        w == 'we\'d' or 
+        w == 'youd' or 
+        w == 'you\'d' or
+        w == 'he\'d' or
+        w == 'she\'d'):
+            return True
+    return False
+
+def tag_CCJ(word):
+    w = word.lower()
+    '''
+    as long as, even if, if, one condition that, provided (that), 
+    providing (that), so long as, unless, whether... or, supposing, 
+    suppose, imagine, but for
+    '''
+    if(w == 'as' or
+        w == 'if' or
+        w == 'even' or
+        w == 'provided' or
+        w == 'providing' or
+        w == 'suppose' or
+        w == 'supposing' or
+        w == 'unless' or
+        w == 'whether' or
+        w == 'envision' or
+        w == 'envisioning' or
+        w == 'conceptualize'or
+        w == 'conceptualizing' or
+        w == 'conjure' or
+        w == 'conjuring' or
+        w == 'visualize' or
+        w == 'visualizing'):
+        return True
+    return False
+
+def get_tagged_message(message, tagger):
+    tagset = None
+    formatted_message = format_tweet(message)
+    tokens = twokenize.tokenize(formatted_message)
+    tags = nltk.tag._pos_tag(tokens, tagset, tagger)
+    return format_tagged(tags)
+## }}}
+
+def classify(tweetfile):
+    tweetFile = open(tweetfile, 'r')
+    tagFile = open(taggedFile, 'w')
+
+    tagger = PerceptronTagger()
+    form_num = 7
+
+    cf_count = [[0 for x in range(form_num)] for x in range(form_num)]
+
+    form_vec = []
+
+    print("Reading file...")
+    tweet = tweetFile.readline()
+
+    while tweet != '':
+        taggedTweet = get_tagged_message(tweet, tagger)
+        tagFile.write(taggedTweet)
+        #print("did tweet")
+        form = int(get_cf_form(taggedTweet))
+
+        ## if our tweet is positive, print it
+        if form != 0:
+            print(tweet)
+
+        form_vec.append(form)
+
+        cf_count[form][0] = cf_count[form][0] + 1
+
+        tweet = tweetFile.readline()
+
+    count = 0
+    for i in xrange(1,form_num):
+        count = count + cf_count[i][0]
+
+
+    print("finished tagging...")
+    tweetFile.close()
+    tagFile.close()
+
+    print("counterfactuals: " + str(count))
+
+main()
