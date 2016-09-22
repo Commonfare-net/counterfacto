@@ -41,6 +41,7 @@ twit_consumer_secret = ''
 twit_access_key = ''
 twit_access_secret = ''
 
+
 def main():
     ## credential check json
     #print(api.VerifyCredentials())
@@ -81,9 +82,12 @@ def main():
 
             if len(sys.argv) >= 3:
                 searchterm = ' '.join(sys.argv[2:])
+            else:
+                searchterm = sys.argv[2]
+
             statuses = api.GetSearch(term=searchterm,
-                                     count=100,
-                                     result_type="recent")
+                                     count=100)
+                                     #result_type="recent")
 
             #for s in statuses:
             #    print(s.text)
