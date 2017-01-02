@@ -43,10 +43,25 @@ After installing the necessary python modules, run `make`, which will
 then download the needed data for nltk, and tell you how to use your
 twitter credentials in counterfacto
 
+### Running the web edition of counterfacto
+
+To run counterfacto along with its web interface, you will need
+additional dependencies:
+
+```
+python-flask
+```
+
 ## Usage
 
 ```
 usage: ./counterfacto [-a account] [-f tweetfile] [-s searchterm]
+```
+
+The web interface can be ran with (port defaults to 5000):
+
+```
+usage: ./counterfacto-web [-p port]
 ```
 
 ## References

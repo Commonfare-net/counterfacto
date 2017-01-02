@@ -30,7 +30,6 @@ import sys
 from twitter import *
 import twokenize
 
-
 global tweetfile
 global taggedFile
 taggedFile = 'tagged.txt'
@@ -41,7 +40,6 @@ try:
 except:
     print('no credentials file found. please create it.')
     exit(1)
-
 
 def main():
     ## credential check json
