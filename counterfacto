@@ -35,11 +35,12 @@ global tweetfile
 global taggedFile
 taggedFile = 'tagged.txt'
 
-## get these by creating a twitter app
-oatoken = ''
-oasecret = ''
-conskey = ''
-conssecret = ''
+try:
+    with open('credentials') as fd:
+        exec(fd.read())
+except:
+    print('no credentials file found. please create it.')
+    exit(1)
 
 
 def main():
@@ -103,7 +104,7 @@ def main():
             classify(tweetfile)
 
     except:
-        print("usage: counterfacto [-a account] [-f tweetfile] [-s searchterm]")
+        print("usage: " + sys.argv[0] + " [-a account] [-f tweetfile] [-s searchterm]")
         exit(1)
 
 ## {{{ processing functions
@@ -300,6 +301,6 @@ def classify(tweetfile):
     tweetFile.close()
     tagFile.close()
 
-    print("counterfactuals: " + str(count))
+    print("counterfactuals: " + str(count) + "/100")
 
 main()
