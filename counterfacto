@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# Counterfacto is Copyright (C) 2016 by the Dyne.org Foundation
+# Counterfacto is Copyright (c) 2016 by the Dyne.org Foundation
 # as part of the PIEnews project
 #
 # This file is part of Counterfacto
@@ -27,7 +27,7 @@ import nltk
 from nltk.tag.perceptron import PerceptronTagger
 import re
 import sys
-import twitter
+from twitter import *
 import twokenize
 
 
@@ -36,10 +36,10 @@ global taggedFile
 taggedFile = 'tagged.txt'
 
 ## get these by creating a twitter app
-twit_consumer_key = ''
-twit_consumer_secret = ''
-twit_access_key = ''
-twit_access_secret = ''
+oatoken = ''
+oasecret = ''
+conskey = ''
+conssecret = ''
 
 
 def main():
@@ -52,20 +52,16 @@ def main():
             classify(tweetfile)
 
         elif sys.argv[1] == '-a':
-            api = twitter.Api(consumer_key=twit_consumer_key,
-                  consumer_secret=twit_consumer_secret,
-                  access_token_key=twit_access_key,
-                  access_token_secret=twit_access_secret)
-
+            api = Twitter(auth=OAuth(oatoken,oasecret,conskey,conssecret))
             accountname = sys.argv[2]
-            statuses = api.GetUserTimeline(screen_name=accountname,
-                                           count=100)
+            statuses = api.statuses.user_timeline(screen_name=accountname,
+                                                  count=100)
 
             tweetfile = 'fetchedtweets-' + sys.argv[2] + '.txt'
             tweetFile = open(tweetfile, 'w')
 
             for s in statuses:
-                sintweet = s.text
+                sintweet = s['text']
                 sintweet = sintweet.replace('\n', ' ')
                 sintweet = sintweet.encode('ascii', 'ignore')
                 tweetFile.write(sintweet + '\n')
@@ -107,7 +103,7 @@ def main():
             classify(tweetfile)
 
     except:
-        print("Usage: ./counterfacto {-a|-f|-s} {twitter account | file with tweets | search terms}")
+        print("usage: counterfacto [-a account] [-f tweetfile] [-s searchterm]")
         exit(1)
 
 ## {{{ processing functions
@@ -189,41 +185,41 @@ def get_cf_form(tagged_message):
 
 def is_twitter_cf_modal(word):
     w = unicode(word, errors='ignore').encode('utf-8').lower()
-    if (w == 'should' or 
+    if (w == 'should' or
         w == 'should\'ve' or
         w == 'shouldve' or
-        w == 'shoulda' or 
-        w == 'shulda' or 
-        w == 'shuda' or 
-        w == 'shudda' or 
-        w == 'shudve' or 
-        w == 'would' or 
+        w == 'shoulda' or
+        w == 'shulda' or
+        w == 'shuda' or
+        w == 'shudda' or
+        w == 'shudve' or
+        w == 'would' or
         w == 'would\'ve' or
         w == 'wouldve' or
-        w == 'woulda' or 
-        w == 'wuda' or 
-        w == 'wulda' or 
-        w == 'wudda' or 
-        w == 'wudve' or 
-        w == 'wlda' or 
-        w == 'could' or 
+        w == 'woulda' or
+        w == 'wuda' or
+        w == 'wulda' or
+        w == 'wudda' or
+        w == 'wudve' or
+        w == 'wlda' or
+        w == 'could' or
         w == 'could\'ve' or
         w == 'couldve' or
-        w == 'coulda' or 
-        w == 'cudda' or 
-        w == 'culda' or 
-        w == 'cudve' or 
-        w == 'must' or 
-        w == 'mustve' or 
-        w == 'might' or 
+        w == 'coulda' or
+        w == 'cudda' or
+        w == 'culda' or
+        w == 'cudve' or
+        w == 'must' or
+        w == 'mustve' or
+        w == 'might' or
         w == 'might\'ve' or
-        w == 'mightve' or 
-        w == 'ought' or 
-        w == 'may' or 
-        w == 'i\'d' or 
-        w == 'id' or 
-        w == 'we\'d' or 
-        w == 'youd' or 
+        w == 'mightve' or
+        w == 'ought' or
+        w == 'may' or
+        w == 'i\'d' or
+        w == 'id' or
+        w == 'we\'d' or
+        w == 'youd' or
         w == 'you\'d' or
         w == 'he\'d' or
         w == 'she\'d'):
@@ -233,8 +229,8 @@ def is_twitter_cf_modal(word):
 def tag_CCJ(word):
     w = word.lower()
     '''
-    as long as, even if, if, one condition that, provided (that), 
-    providing (that), so long as, unless, whether... or, supposing, 
+    as long as, even if, if, one condition that, provided (that),
+    providing (that), so long as, unless, whether... or, supposing,
     suppose, imagine, but for
     '''
     if(w == 'as' or
