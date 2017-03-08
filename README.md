@@ -1,5 +1,5 @@
-
-# Counterfacto
+Counterfacto
+============
 
 Counterfactual (noun)
 
@@ -11,7 +11,7 @@ Effects: it starts off with disappointment, then one will be able to
 uncover insights or knowledge that can be used to enhance future
 performance, leading to a better outcome in life.
 
-----------------------------------------------------------------------------------
+-----------------------------------------------------------------------
 
 Counterfacto is a small software tool that can analyse search results
 on twitter to highlight counterfactual statements on certain topics.
@@ -24,7 +24,8 @@ We deem such a tool as a useful experiment, considering the importance
 of counterfactual analysis for political sentiment assessments and
 focus on news stories.
 
-## Dependencies
+Dependencies
+------------
 
 Python is required along the following packages:
 
@@ -43,7 +44,8 @@ After installing the necessary python modules, run `make`, which will
 then download the needed data for nltk, and tell you how to use your
 twitter credentials in counterfacto
 
-### Running the web edition of counterfacto
+Running the web edition of counterfacto
+---------------------------------------
 
 To run counterfacto along with its web interface, you will need
 additional dependencies:
@@ -52,7 +54,8 @@ additional dependencies:
 python-flask
 ```
 
-## Usage
+Usage
+-----
 
 ```
 usage: ./counterfacto [-a account] [-f tweetfile] [-s searchterm]
@@ -64,17 +67,17 @@ The web interface can be ran with (port defaults to 5000):
 usage: ./counterfacto-web [-p port]
 ```
 
-## References
+References
+----------
 
-- [Learning Representations for Counterfactual Inference (2016)](http://jmlr.org/proceedings/papers/v48/johansson16.pdf)
+* [Learning Representations for Counterfactual Inference (2016)](http://jmlr.org/proceedings/papers/v48/johansson16.pdf)
+* [Bounding and Minimizing Counterfactual Error (2016)](https://arxiv.org/abs/1606.03976)
+* [Counterfactuals in the Language of Social Media: A Natural Language Processing Project in Conjunction with the World Well Being Project (2015)](http://www.seas.upenn.edu/~cse400/CSE400_2015_2016/reports/report_15.pdf)
 
-- [Bounding and Minimizing Counterfactual Error (2016)](https://arxiv.org/abs/1606.03976)
+Licensing
+---------
 
-- [Counterfactuals in the Language of Social Media: A Natural Language Processing Project in Conjunction with the World Well Being Project (2015)](http://www.seas.upenn.edu/~cse400/CSE400_2015_2016/reports/report_15.pdf)
-
-## Licensing
-
-Counterfacto is Copyright (C) 2016 by the Dyne.org Foundation
+Counterfacto is Copyright (C) 2016-2017 by the Dyne.org Foundation
 as part of the PIEnews project
 
 Software written by Ivan J. <parazyd@dyne.org>
